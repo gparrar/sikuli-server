@@ -1,0 +1,45 @@
+FROM fedora:21
+
+MAINTAINER Gonzalo Parra
+
+ENV WORKDIR /home
+
+WORKDIR ${WORKDIR}
+
+# System pre requirements
+RUN yum update -y
+
+RUN yum install -y wget \
+    sudo \
+    tar \
+    unzip \
+    python-pip \
+    ssh* \
+    opencv* \
+    openssh-server \
+    openssl-devel \
+    tesseract \
+    python-devel \
+    libffi-devel \
+    yum clean all
+
+# Install maven
+RUN wget http://ftp.cixug.es/apache/maven/maven-3/3.3.9/binaries/apache-maven-3.3.9-bin.tar.gz
+RUN tar xvf apache-maven-3.3.9-bin.tar.gz -C /usr/local/
+RUN rm apache-maven-3.3.9-bin.tar.gz
+
+# Install Oracle Java JDK
+RUN wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/8u151-b12/e758a0de34e24606bca991d704f6dcbf/jdk-8u151-linux-x64.rpm
+RUN rpm -i jdk-8u151-linux-x64.rpm
+RUN rm jdk-8u151-linux-x64.rpm
+
+# Install Robot Framework and libraries
+RUN pip install --upgrade virtualenv
+RUN pip install robotframework
+
+COPY ./robotframework-SikuliLibrary/ ${WORKDIR}
+# Compile and install robot framework sikuli library
+RUN /usr/local/apache-maven-3.3.9/bin/mvn clean package
+RUN python setup.py install
+
+CMD ["java","-jar","target/SikuliLibrary.jar", "1000", "."]
